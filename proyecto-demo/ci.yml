@@ -1,0 +1,115 @@
+name: CI Pipeline Básico
+
+# Eventos que disparan este workflow
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # Permite ejecución manual desde GitHub UI
+
+# Jobs a ejecutar
+jobs:
+  # Job 1: Ejecutar Tests
+  test:
+    name: 🧪 Ejecutar Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Step 1: Hacer checkout del código del repositorio
+      - name: 📥 Checkout del código
+        uses: actions/checkout@v3
+      
+      # Step 2: Configurar Node.js en el runner
+      - name: ⚙️ Configurar Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      # Step 3: Instalar dependencias (si las hay)
+      - name: 📦 Instalar dependencias
+        run: npm install
+      
+      # Step 4: Ejecutar los tests
+      - name: 🧪 Ejecutar tests
+        run: npm test
+      
+      # Step 5: Mostrar información del sistema
+      - name: 💻 Información del Sistema Operativo
+        run: |
+          echo "===================================="
+          echo "INFORMACIÓN DEL RUNNER"
+          echo "===================================="
+          echo "Sistema Operativo: $RUNNER_OS"
+          echo "Arquitectura: $RUNNER_ARCH"
+          echo "Directorio de trabajo: $GITHUB_WORKSPACE"
+          echo "===================================="
+          echo "DETALLES DEL SISTEMA"
+          echo "===================================="
+          uname -a
+          echo "===================================="
+          echo "VERSIONES DE SOFTWARE"
+          echo "===================================="
+          node --version
+          npm --version
+          echo "===================================="
+          echo "INFORMACIÓN DE RECURSOS"
+          echo "===================================="
+          nproc
+          free -h
+          df -h
+
+  # Job 2: Build (se ejecuta DESPUÉS de que test pase)
+  build:
+    name: 🏗️ Build de la Aplicación
+    needs: test  # Este job depende de que 'test' se complete exitosamente
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout del código
+        uses: actions/checkout@v3
+      
+      - name: ⚙️ Configurar Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: 📦 Instalar dependencias
+        run: npm install
+      
+      - name: 🏗️ Ejecutar build
+        run: |
+          echo "🏗️ Building application..."
+          node index.js
+          echo "✅ Build completado exitosamente!"
+      
+      # Guardar el código como artifact para poder descargarlo después
+      - name: 📤 Subir artifact del build
+        uses: actions/upload-artifact@v3
+        with:
+          name: aplicacion-build
+          path: |
+            index.js
+            test.js
+            package.json
+          retention-days: 5
+
+  # Job 3: Información del workflow (se ejecuta en paralelo con los otros)
+  workflow-info:
+    name: 📊 Información del Workflow
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📊 Mostrar información del workflow
+        run: |
+          echo "===================================="
+          echo "INFORMACIÓN DEL WORKFLOW"
+          echo "===================================="
+          echo "Nombre del repositorio: ${{ github.repository }}"
+          echo "Rama: ${{ github.ref }}"
+          echo "SHA del commit: ${{ github.sha }}"
+          echo "Actor que disparó el workflow: ${{ github.actor }}"
+          echo "Evento que disparó el workflow: ${{ github.event_name }}"
+          echo "Número de ejecución: ${{ github.run_number }}"
+          echo "Intento de ejecución: ${{ github.run_attempt }}"
+          echo "===================================="

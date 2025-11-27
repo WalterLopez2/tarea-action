@@ -1,0 +1,18 @@
+{
+  "name": "cicd-demo-so",
+  "version": "1.0.0",
+  "description": "Proyecto demo para aprender CI/CD con GitHub Actions - Clase de Sistemas Operativos",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test.js",
+    "start": "node index.js"
+  },
+  "keywords": [
+    "ci-cd",
+    "github-actions",
+    "testing",
+    "sistemas-operativos"
+  ],
+  "author": "Tu Nombre",
+  "license": "MIT"
+}

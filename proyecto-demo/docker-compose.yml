@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  # Aplicación principal
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: cicd-demo-app:latest
+    container_name: cicd-app
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    networks:
+      - app-network
+    volumes:
+      # Monta el código en modo desarrollo (opcional)
+      - ./index.js:/app/index.js:ro
+      - ./test.js:/app/test.js:ro
+
+  # Servicio de prueba - ejecuta los tests
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cicd-test
+    command: npm test
+    environment:
+      - NODE_ENV=test
+    networks:
+      - app-network
+    depends_on:
+      - app
+    profiles:
+      - test
+
+  # Ejemplo: Base de datos (para demostración)
+  # Descomenta si necesitas una base de datos
+  # db:
+  #   image: postgres:14-alpine
+  #   container_name: cicd-db
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_USER: appuser
+  #     POSTGRES_PASSWORD: apppass
+  #     POSTGRES_DB: appdb
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - db-data:/var/lib/postgresql/data
+  #   networks:
+  #     - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+# volumes:
+#   db-data:
