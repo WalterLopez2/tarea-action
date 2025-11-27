@@ -2,7 +2,7 @@ name: Mi Primer Workflow
 on: [push]
 jobs:
   saludar:
-    runs-on: Ivans-MacBook-Pro
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v3
       - run: echo "¡Hola Mundo!"
