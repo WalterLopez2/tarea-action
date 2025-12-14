@@ -1,0 +1,179 @@
+¿Cómo se relacionan los jobs de GitHub Actions con los procesos en un SO?
+
+Un job en GitHub Actions es conceptualmente similar a un proceso en un sistema operativo:
+
+Cada job se ejecuta en un runner (una VM o contenedor aislado).
+
+Dentro del job:
+
+Cada step suele ejecutarse como uno o varios procesos del SO.
+
+Por ejemplo, un run: npm test crea un proceso npm, que a su vez crea procesos hijos.
+
+Analogía directa:
+
+SO	GitHub Actions
+Proceso	Job
+Hilos	Steps / comandos
+PID	Identidad interna del job
+Aislamiento	Runner (VM/Container)
+
+Jobs distintos no comparten memoria ni procesos, igual que procesos independientes.
+
+ ¿Qué pasa con el filesystem cuando termina un job?
+
+Cuando un job termina, el filesystem del runner:
+
+ Se destruye completamente
+
+Todo lo que se haya escrito:
+
+archivos temporales
+
+binarios instalados
+
+variables de entorno
+
+caches locales
+
+Desaparece, salvo que explícitamente se persista.
+
+Persistencia posible:
+
+actions/upload-artifact → archivos
+
+actions/cache → dependencias
+
+Outputs de jobs → valores pequeños (strings)
+
+ Esto imita el concepto de:
+
+Un proceso termina → el SO libera todos sus recursos
+ ¿Por qué es importante testear en múltiples sistemas operativos?
+
+Porque el sistema operativo sí importa:
+
+Diferencias reales:
+
+Filesystem
+
+Linux: case-sensitive
+
+Windows: case-insensitive
+
+Separadores de paths
+
+/ vs \
+
+Shell
+
+bash vs PowerShell
+
+Permisos
+
+chmod, umask
+
+Librerías del sistema
+
+glibc, openssl, etc.
+
+En CI/CD:
+
+Un bug puede:
+
+no aparecer en Linux
+
+romper producción en Windows o macOS
+
+GitHub Actions permite matrices:
+
+strategy:
+  matrix:
+    os: [ubuntu-latest, windows-latest, macos-latest]
+
+
+Es equivalente a probar tu programa en distintos kernels y entornos.
+
+ ¿Cómo maneja GitHub Actions la concurrencia de workflows?
+
+GitHub Actions gestiona la concurrencia de forma parecida a un scheduler del SO:
+
+Niveles de concurrencia:
+
+Repositorio
+
+Cuenta / organización
+
+Runner disponible
+
+Configuración explícita
+
+Ejemplo:
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: true
+
+
+Esto significa:
+
+Solo un workflow activo por grupo
+
+Los nuevos cancelan a los viejos
+
+ Similar a: semáforos locks colas de procesos
+
+ ¿Qué recursos del sistema usa un runner?
+
+Un runner es una máquina real (VM o contenedor) con recursos limitados:
+
+Recursos principales:
+
+CPU
+
+ Threads
+
+ RAM
+
+Disco
+
+ Red
+
+Ejemplo (Ubuntu runner típico):
+2–4 vCPU
+~7 GB RAM
+~14 GB disco
+GitHub:
+Aísla runners
+Limita recursos Mata jobs que: exceden tiempo consumen demasiado
+
+ Igual que un SO con cgroups y quotas.
+
+ ¿Cómo se comunican los procesos en un pipeline de CI/CD?
+Hay varios mecanismos, muy parecidos a IPC en SO:
+Dentro de un job
+Variables de entorno
+Stdout / stderr
+
+Files temporales
+echo "VERSION=1.2.3" >> $GITHUB_ENV
+Entre steps:
+Variables de entorno persistidas
+Outputs de steps
+
+Entre jobs:
+Artifacts
+Job outputs
+Cache compartida
+Entre workflows:
+APIs
+Webhooks
+Repositorios
+
+ Analogía SO:
+
+CI/CD	SO
+Artifacts	Archivos
+Outputs	Pipes
+Env vars	Variables de proceso
+APIs	Sockets
